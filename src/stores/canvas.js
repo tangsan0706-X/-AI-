@@ -158,6 +158,9 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
     }
     isRunning.value = false
+
+    // 自动保存执行结果
+    saveToLocal()
   }
 
   async function executeNode(node, inputData) {

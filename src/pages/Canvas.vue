@@ -96,6 +96,19 @@ onMounted(() => {
       setItem('canvas_guide_seen', true)
     }, 800)
   }
+
+  // 调试：检查已加载的节点数据
+  setTimeout(() => {
+    console.log('📊 已加载的画布数据:', {
+      nodes: store.nodes.map(n => ({
+        id: n.id,
+        label: n.label,
+        status: n.status,
+        hasOutput: !!n.output,
+        output: n.output
+      }))
+    })
+  }, 1000)
 })
 
 function handleAddNode(nodeTypeDef) {
