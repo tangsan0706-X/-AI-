@@ -17,6 +17,12 @@
           <div :class="['status-badge', node.status]">{{ statusLabel }}</div>
         </div>
 
+        <!-- Debug: Show if output exists -->
+        <div v-if="node.status === 'completed'" class="config-section">
+          <div class="config-label">输出数据</div>
+          <div class="config-value">{{ node.output ? '✅ 有数据' : '❌ 无数据' }}</div>
+        </div>
+
         <div class="config-divider" />
 
         <!-- Dynamic config fields based on node type -->
@@ -56,28 +62,28 @@
             <div class="config-label">输出结果</div>
 
             <!-- 视频输出 -->
-            <template v-if="node.output.video">
+            <template v-if="getOutputData('video')">
               <div class="output-preview">
-                <video :src="node.output.video" controls class="output-video" />
+                <video :src="getOutputData('video')" controls class="output-video" />
               </div>
-              <a :href="node.output.video" :download="getDownloadFilename('video')" class="btn btn-primary btn-sm download-btn">
+              <a :href="getOutputData('video')" :download="getDownloadFilename('video')" class="btn btn-primary btn-sm download-btn">
                 <Download :size="14" /> 下载视频
               </a>
             </template>
 
             <!-- 图片输出 -->
-            <template v-else-if="node.output.image">
+            <template v-else-if="getOutputData('image')">
               <div class="output-preview">
-                <img :src="node.output.image" alt="输出图片" class="output-image" />
+                <img :src="getOutputData('image')" alt="输出图片" class="output-image" />
               </div>
-              <a :href="node.output.image" :download="getDownloadFilename('image')" class="btn btn-primary btn-sm download-btn">
+              <a :href="getOutputData('image')" :download="getDownloadFilename('image')" class="btn btn-primary btn-sm download-btn">
                 <Download :size="14" /> 下载图片
               </a>
             </template>
 
             <!-- 文本输出 -->
-            <template v-else-if="node.output.text">
-              <div class="output-text">{{ node.output.text }}</div>
+            <template v-else-if="getOutputData('text')">
+              <div class="output-text">{{ getOutputData('text') }}</div>
             </template>
 
             <!-- 其他数据输出 -->
@@ -98,7 +104,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { X, Trash2, Download } from 'lucide-vue-next'
 import { getNodeType } from '../../data/nodeRegistry'
 
@@ -107,11 +113,38 @@ const emit = defineEmits(['close', 'delete', 'updateConfig'])
 
 const nodeDef = computed(() => props.node ? getNodeType(props.node.type) : null)
 
+// Debug: 监听节点变化，打印输出数据
+watch(() => props.node, (node) => {
+  if (node && node.status === 'completed') {
+    console.log('✅ 节点执行完成:', {
+      id: node.id,
+      label: node.label,
+      status: node.status,
+      hasOutput: !!node.output,
+      output: node.output
+    })
+  }
+}, { immediate: true, deep: true })
+
 const statusLabels = { idle: '空闲', running: '运行中', completed: '已完成', error: '错误' }
 const statusLabel = computed(() => statusLabels[props.node?.status] || '空闲')
 
 function updateConfig(key, value) {
   emit('updateConfig', { nodeId: props.node.id, config: { [key]: value } })
+}
+
+function getOutputData(type) {
+  if (!props.node?.output) return null
+
+  const output = props.node.output
+
+  // 直接访问
+  if (output[type]) return output[type]
+
+  // 通过 media 字段访问（输出节点）
+  if (output.media && output.media[type]) return output.media[type]
+
+  return null
 }
 
 function getDownloadFilename(type) {
