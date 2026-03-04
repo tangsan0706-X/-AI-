@@ -1,0 +1,102 @@
+# 加速器配置指南 - 解决 DashScope API 500 错误
+
+## 问题
+使用加速器规则模式时，DashScope API 请求返回 500 错误。
+
+## 原因
+加速器可能将 DashScope API 请求代理到国外服务器，导致：
+1. 阿里云 API 拒绝来自代理 IP 的请求
+2. 代理服务器无法正确转发请求
+3. 网络延迟过高导致超时
+
+## 解决方案
+
+### 方案 1：添加直连规则（推荐）⭐
+
+将以下域名添加到加速器的"直连列表"（绕过代理）：
+
+dashscope.aliyuncs.com
+*.aliyuncs.com
+localhost
+127.0.0.1
+
+### 方案 2：使用全局直连模式
+
+临时切换加速器为"全局直连"或"仅代理国外"模式。
+
+### 方案 3：关闭加速器
+
+如果不需要访问国外网站，可以暂时关闭加速器：
+1. 完全退出加速器软件
+2. 刷新浏览器
+3. 测试 AI 生成功能
+4. 测试成功后可重新开启加速器（配置好直连规则）
+
+---
+
+## 常见加速器配置方法
+
+### Clash 配置
+1. 打开 Clash 控制面板
+2. Proxies → Rule → Edit
+3. 在 rules 部分添加：
+   DOMAIN-SUFFIX,aliyuncs.com,DIRECT
+   DOMAIN,dashscope.aliyuncs.com,DIRECT
+
+### V2RayN 配置
+1. 参数设置 → 路由设置
+2. 域名解析策略 → 域名直连
+3. 添加：dashscope.aliyuncs.com
+
+### Clash for Windows 配置
+1. Settings → Profiles
+2. 编辑当前配置文件
+3. 在 rules 区域顶部添加：
+   - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
+   - DOMAIN-KEYWORD,dashscope,DIRECT
+
+### Shadowrocket (iOS/Mac) 配置
+1. 配置 → 路由
+2. 规则 → 添加规则
+3. 类型：DOMAIN-SUFFIX
+   值：aliyuncs.com
+   策略：DIRECT
+
+---
+
+## 验证配置是否生效
+
+### 方法 1：命令行测试
+打开命令提示符，运行：
+curl -v https://dashscope.aliyuncs.com
+
+如果看到 SSL/TLS 握手成功，说明直连生效。
+
+### 方法 2：浏览器测试
+1. 访问 http://localhost:3000/network-test
+2. 点击"测试 API"
+3. 应该显示 ✅ 成功
+
+### 方法 3：实际生成测试
+1. 访问 http://localhost:3000/create
+2. 输入提示词
+3. 点击生成
+4. 应该能成功生成图片（等待 30-60 秒）
+
+---
+
+## 仍然不行？
+
+如果配置直连后仍然失败，请：
+1. 完全重启加速器软件
+2. 刷新浏览器（Ctrl + Shift + R）
+3. 清除 DNS 缓存：ipconfig /flushdns
+4. 如果还是不行，暂时关闭加速器测试
+
+---
+
+## 注意事项
+
+- 配置直连规则后，访问阿里云服务不会走代理
+- 其他国外网站仍然会正常走代理
+- 这是最佳配置，既能科学上网又能正常使用国内 API
