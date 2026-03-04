@@ -14,6 +14,7 @@ const routes = [
   { path: '/resources', name: 'Resources', component: () => import('../pages/Resources.vue') },
   { path: '/search', name: 'Search', component: () => import('../pages/Search.vue') },
   { path: '/messages', name: 'Messages', component: () => import('../pages/Messages.vue') },
+  { path: '/network-test', name: 'NetworkTest', component: () => import('../pages/NetworkTest.vue') },
 ]
 
 const router = createRouter({
