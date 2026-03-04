@@ -54,8 +54,17 @@
           </div>
         </template>
 
+        <!-- Error Output -->
+        <template v-if="node.output && node.output.error">
+          <div class="config-divider" />
+          <div class="error-section">
+            <div class="config-label">❌ 执行错误</div>
+            <div class="error-message">{{ node.output.error }}</div>
+          </div>
+        </template>
+
         <!-- Output Results -->
-        <template v-if="node.output && node.status === 'completed'">
+        <template v-else-if="node.output && node.status === 'completed'">
           <div class="config-divider" />
 
           <div class="output-section">
@@ -138,11 +147,35 @@ function getOutputData(type) {
 
   const output = props.node.output
 
-  // 直接访问
+  // 直接访问 (如: output.video)
   if (output[type]) return output[type]
 
-  // 通过 media 字段访问（输出节点）
-  if (output.media && output.media[type]) return output.media[type]
+  // 通过 media 字段访问对象 (如: output.media.video)
+  if (output.media && typeof output.media === 'object' && output.media[type]) {
+    return output.media[type]
+  }
+
+  // media 字段本身就是数据 (如: output.media 直接是 URL)
+  if (type === 'video' && output.media && typeof output.media === 'string' && output.media.includes('http')) {
+    return output.media
+  }
+
+  if (type === 'image' && output.media && typeof output.media === 'string' && output.media.includes('http')) {
+    return output.media
+  }
+
+  // 搜索所有字段，找到可能的URL
+  for (const key in output) {
+    const value = output[key]
+    if (typeof value === 'string' && value.includes('http')) {
+      if (type === 'video' && (value.includes('.mp4') || value.includes('video'))) {
+        return value
+      }
+      if (type === 'image' && (value.includes('.png') || value.includes('.jpg') || value.includes('image'))) {
+        return value
+      }
+    }
+  }
 
   return null
 }
@@ -373,5 +406,22 @@ function getDownloadFilename(type) {
   align-items: center;
   gap: 6px;
   text-decoration: none;
+}
+
+.error-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-message {
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ef4444;
+  word-break: break-word;
 }
 </style>

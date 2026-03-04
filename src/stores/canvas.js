@@ -137,7 +137,15 @@ export const useCanvasStore = defineStore('canvas', () => {
           inputData[e.targetPort] = outputs[e.sourceNode]?.[e.sourcePort]
         })
 
+        console.log(`🔄 执行节点 #${nodeId} (${node.label})`, {
+          inputData,
+          upstreamOutputs: outputs
+        })
+
         const result = await executeNode(node, inputData)
+
+        console.log(`✅ 节点 #${nodeId} (${node.label}) 执行结果:`, result)
+
         if (result) {
           outputs[nodeId] = result
           node.output = result
