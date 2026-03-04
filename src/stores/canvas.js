@@ -232,7 +232,92 @@ export const useCanvasStore = defineStore('canvas', () => {
       canvasName.value = data.canvasName || '未命名画布'
       nextNodeId = data.nextNodeId || (nodes.value.length + 1)
       nextEdgeId = data.nextEdgeId || (edges.value.length + 1)
+    } else {
+      // 首次使用，加载示例工作流
+      loadExampleWorkflow()
     }
+  }
+
+  function loadExampleWorkflow() {
+    // 创建示例工作流：文本输入 → AI文生图 → AI图生视频 → 输出
+    nodes.value = [
+      {
+        id: 1,
+        type: 'text-input',
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 120,
+        status: 'idle',
+        label: '文本输入',
+        config: {
+          label: '文本输入',
+          text: '一只可爱的橘猫在樱花树下玩耍，阳光明媚，动漫风格'
+        }
+      },
+      {
+        id: 2,
+        type: 'ai-text2img',
+        x: 380,
+        y: 150,
+        width: 200,
+        height: 120,
+        status: 'idle',
+        label: 'AI文生图',
+        config: {
+          label: 'AI文生图',
+          model: 'wanx-v1',
+          size: '1024*1024',
+          steps: 30,
+          cfgScale: 7.5,
+          seed: -1
+        }
+      },
+      {
+        id: 3,
+        type: 'ai-img2video',
+        x: 660,
+        y: 150,
+        width: 200,
+        height: 120,
+        status: 'idle',
+        label: 'AI图生视频',
+        config: {
+          label: 'AI图生视频',
+          model: 'wan2.1-i2v-turbo',
+          size: '1280*720',
+          fps: 8,
+          frames: 24
+        }
+      },
+      {
+        id: 4,
+        type: 'output',
+        x: 940,
+        y: 150,
+        width: 200,
+        height: 120,
+        status: 'idle',
+        label: '输出',
+        config: {
+          label: '输出',
+          format: 'mp4',
+          quality: 'high',
+          filename: 'ai-video-output'
+        }
+      }
+    ]
+
+    edges.value = [
+      { id: 1, sourceNode: 1, sourcePort: 'text', targetNode: 2, targetPort: 'prompt' },
+      { id: 2, sourceNode: 2, sourcePort: 'image', targetNode: 3, targetPort: 'image' },
+      { id: 3, sourceNode: 3, sourcePort: 'video', targetNode: 4, targetPort: 'media' }
+    ]
+
+    viewport.value = { x: 50, y: 50, zoom: 1 }
+    canvasName.value = '示例工作流 - 文本生成动态视频'
+    nextNodeId = 5
+    nextEdgeId = 4
   }
 
   function resetCanvas() {
@@ -252,6 +337,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     isRunning, canvasName, draggingPort, mouseCanvas, selectedNode,
     addNode, removeNode, updateNodePosition, updateNodeConfig,
     selectNode, addEdge, removeEdge, setViewport, clearSelection,
-    startDragPort, endDragPort, runPipeline, saveToLocal, loadFromLocal, resetCanvas
+    startDragPort, endDragPort, runPipeline, saveToLocal, loadFromLocal, resetCanvas,
+    loadExampleWorkflow
   }
 })

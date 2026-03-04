@@ -8,6 +8,7 @@
       @togglePalette="paletteOpen = !paletteOpen"
       @run="store.runPipeline()"
       @save="handleSave"
+      @loadExample="handleLoadExample"
       @zoomIn="zoomIn"
       @zoomOut="zoomOut"
       @zoomReset="zoomReset"
@@ -50,6 +51,11 @@
       @close="showApiKeyModal = false"
       @saved="showApiKeyModal = false"
     />
+
+    <WorkflowGuide
+      :visible="showWorkflowGuide"
+      @close="showWorkflowGuide = false"
+    />
   </div>
 </template>
 
@@ -63,13 +69,16 @@ import NodePalette from '../components/Canvas/NodePalette.vue'
 import NodeConfigPanel from '../components/Canvas/NodeConfigPanel.vue'
 import CanvasMinimap from '../components/Canvas/CanvasMinimap.vue'
 import ApiKeyModal from '../components/Common/ApiKeyModal.vue'
+import WorkflowGuide from '../components/Canvas/WorkflowGuide.vue'
 import { useCanvasStore } from '../stores/canvas'
 import { getNodeType } from '../data/nodeRegistry'
+import { getItem, setItem } from '../utils/localStorage'
 
 const route = useRoute()
 const store = useCanvasStore()
 const paletteOpen = ref(false)
 const showApiKeyModal = ref(false)
+const showWorkflowGuide = ref(false)
 
 onMounted(() => {
   const id = route.params.id
@@ -77,6 +86,15 @@ onMounted(() => {
     store.loadFromLocal(id)
   } else {
     store.loadFromLocal()
+  }
+
+  // 首次访问画布时显示工作流指南
+  const hasSeenGuide = getItem('canvas_guide_seen')
+  if (!hasSeenGuide) {
+    setTimeout(() => {
+      showWorkflowGuide.value = true
+      setItem('canvas_guide_seen', true)
+    }, 800)
   }
 })
 
@@ -105,6 +123,18 @@ function handleSave() {
 function handleClear() {
   if (confirm('确定要清空画布吗？')) {
     store.resetCanvas()
+  }
+}
+
+function handleLoadExample() {
+  if (store.nodes.length > 0) {
+    if (confirm('加载示例工作流将清空当前画布，确定要继续吗？')) {
+      store.loadExampleWorkflow()
+      showWorkflowGuide.value = true
+    }
+  } else {
+    store.loadExampleWorkflow()
+    showWorkflowGuide.value = true
   }
 }
 

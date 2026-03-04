@@ -15,6 +15,9 @@
       <button class="toolbar-btn" @click="$emit('save')" title="保存">
         <Save :size="18" />
       </button>
+      <button class="toolbar-btn" @click="$emit('loadExample')" title="加载示例工作流">
+        <Lightbulb :size="18" />
+      </button>
     </div>
 
     <div class="toolbar-divider" />
@@ -50,7 +53,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { Plus, Play, Save, Minus, Plus as PlusIcon, Maximize2, Trash2 } from 'lucide-vue-next'
+import { Plus, Play, Save, Minus, Plus as PlusIcon, Maximize2, Trash2, Lightbulb } from 'lucide-vue-next'
 
 const props = defineProps({
   zoom: Number,
@@ -58,7 +61,7 @@ const props = defineProps({
   name: String
 })
 
-defineEmits(['togglePalette', 'run', 'save', 'zoomIn', 'zoomOut', 'zoomReset', 'clear', 'rename'])
+defineEmits(['togglePalette', 'run', 'save', 'loadExample', 'zoomIn', 'zoomOut', 'zoomReset', 'clear', 'rename'])
 
 const canvasName = ref(props.name || '未命名画布')
 watch(() => props.name, (v) => { canvasName.value = v })
