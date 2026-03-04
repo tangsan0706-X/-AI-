@@ -1,0 +1,240 @@
+<template>
+  <div :class="['config-panel', { open: !!node }]">
+    <template v-if="node">
+      <div class="config-header">
+        <h3>{{ nodeDef?.label || node.type }}</h3>
+        <button class="close-btn" @click="$emit('close')">
+          <X :size="18" />
+        </button>
+      </div>
+      <div class="config-body">
+        <div class="config-section">
+          <div class="config-label">节点ID</div>
+          <div class="config-value">#{{ node.id }}</div>
+        </div>
+        <div class="config-section">
+          <div class="config-label">状态</div>
+          <div :class="['status-badge', node.status]">{{ statusLabel }}</div>
+        </div>
+
+        <div class="config-divider" />
+
+        <!-- Dynamic config fields based on node type -->
+        <template v-for="(value, key) in node.config" :key="key">
+          <div class="config-field">
+            <label>{{ key }}</label>
+            <template v-if="typeof value === 'number'">
+              <input
+                type="number"
+                :value="value"
+                @input="updateConfig(key, Number($event.target.value))"
+                class="config-input"
+              />
+            </template>
+            <template v-else-if="typeof value === 'boolean'">
+              <label class="toggle">
+                <input type="checkbox" :checked="value" @change="updateConfig(key, $event.target.checked)" />
+                <span class="toggle-slider" />
+              </label>
+            </template>
+            <template v-else>
+              <input
+                type="text"
+                :value="value"
+                @input="updateConfig(key, $event.target.value)"
+                class="config-input"
+              />
+            </template>
+          </div>
+        </template>
+
+        <div class="config-divider" />
+
+        <button class="btn btn-outline btn-sm delete-btn" @click="$emit('delete', node.id)">
+          <Trash2 :size="14" /> 删除节点
+        </button>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { X, Trash2 } from 'lucide-vue-next'
+import { getNodeType } from '../../data/nodeRegistry'
+
+const props = defineProps({ node: Object })
+const emit = defineEmits(['close', 'delete', 'updateConfig'])
+
+const nodeDef = computed(() => props.node ? getNodeType(props.node.type) : null)
+
+const statusLabels = { idle: '空闲', running: '运行中', completed: '已完成', error: '错误' }
+const statusLabel = computed(() => statusLabels[props.node?.status] || '空闲')
+
+function updateConfig(key, value) {
+  emit('updateConfig', { nodeId: props.node.id, config: { [key]: value } })
+}
+</script>
+
+<style scoped>
+.config-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border-color);
+  z-index: 20;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.config-panel.open {
+  transform: translateX(0);
+}
+
+.config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.config-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.close-btn {
+  color: var(--text-tertiary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.config-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.config-value {
+  font-size: 13px;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.status-badge.idle { background: var(--bg-hover); color: var(--text-secondary); }
+.status-badge.running { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.status-badge.completed { background: rgba(16,185,129,0.1); color: #10b981; }
+.status-badge.error { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+.config-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-field label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-transform: capitalize;
+}
+
+.config-input {
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.config-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-hover);
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  left: 2px;
+  top: 2px;
+  transition: 0.2s;
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--accent);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+}
+
+.delete-btn {
+  color: var(--danger);
+  border-color: var(--danger);
+  margin-top: 8px;
+}
+
+.delete-btn:hover {
+  background: rgba(239,68,68,0.1);
+}
+</style>
