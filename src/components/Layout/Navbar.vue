@@ -15,6 +15,14 @@
           <Sparkles :size="16" />
           创作
         </router-link>
+        <button
+          class="api-key-btn"
+          @click="showApiKeyModal = true"
+          :title="hasApiKey ? 'API Key 已设置' : '设置 API Key'"
+        >
+          <Key :size="16" />
+          <span class="api-key-status" :class="{ active: hasApiKey }"></span>
+        </button>
         <ThemeToggle />
         <NotificationBell v-if="authStore.isLoggedIn" />
         <template v-if="authStore.isLoggedIn">
@@ -32,19 +40,30 @@
         <Menu :size="22" />
       </button>
     </div>
+
+    <ApiKeyModal
+      :visible="showApiKeyModal"
+      @close="showApiKeyModal = false"
+      @saved="showApiKeyModal = false"
+    />
   </nav>
 </template>
 
 <script setup>
-import { Menu, Sparkles } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Menu, Sparkles, Key } from 'lucide-vue-next'
 import SearchBar from '../Common/SearchBar.vue'
 import ThemeToggle from '../Common/ThemeToggle.vue'
 import UserAvatar from '../Common/UserAvatar.vue'
 import NotificationBell from '../Common/NotificationBell.vue'
+import ApiKeyModal from '../Common/ApiKeyModal.vue'
 import { useAuthStore } from '../../stores/auth'
+import { hasApiKey as checkApiKey } from '../../services/dashscope'
 
 defineEmits(['toggle-sidebar'])
 const authStore = useAuthStore()
+const showApiKeyModal = ref(false)
+const hasApiKey = computed(() => checkApiKey())
 </script>
 
 <style scoped>
@@ -130,6 +149,44 @@ const authStore = useAuthStore()
 .nav-link-create {
   color: var(--accent);
   font-weight: 500;
+}
+
+.api-key-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.api-key-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.api-key-status {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+  border: 2px solid var(--bg-navbar);
+  transition: all var(--transition);
+}
+
+.api-key-status.active {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .avatar-link {

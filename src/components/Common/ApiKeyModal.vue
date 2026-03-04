@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div v-if="visible" class="modal-overlay" @click.self="$emit('close')">
       <div class="modal-card" :class="{ shake: shouldShake }">
-        <h3>设置 DashScope API Key</h3>
+        <h3>🔑 设置 DashScope API Key</h3>
         <p class="modal-desc">
           请输入阿里云 DashScope API Key 以使用 AI 生成功能。
           <a href="https://dashscope.console.aliyun.com/apiKey" target="_blank" rel="noopener">
@@ -10,12 +10,20 @@
           </a>
         </p>
 
+        <div v-if="currentKey && !key" class="current-key-info">
+          <div class="info-label">当前 API Key</div>
+          <div class="info-value">{{ maskedKey }}</div>
+          <button class="btn btn-ghost btn-sm" @click="key = currentKey">
+            <Edit3 :size="14" /> 编辑
+          </button>
+        </div>
+
         <div class="input-group">
-          <label>API Key</label>
+          <label>{{ key || !currentKey ? 'API Key' : '新的 API Key（留空保持不变）' }}</label>
           <input
             v-model="key"
             :type="showKey ? 'text' : 'password'"
-            placeholder="sk-..."
+            :placeholder="currentKey ? '输入新的 API Key 或留空' : 'sk-...'"
             class="key-input"
             @keyup.enter="handleSave"
             autofocus
@@ -29,7 +37,9 @@
 
         <div class="modal-actions">
           <button class="btn btn-ghost" @click="$emit('close')">取消</button>
-          <button class="btn btn-primary" @click="handleSave" :disabled="!key.trim()">保存</button>
+          <button class="btn btn-primary" @click="handleSave">
+            {{ key.trim() ? '保存' : (currentKey ? '关闭' : '保存') }}
+          </button>
         </div>
       </div>
     </div>
@@ -37,8 +47,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { Eye, EyeOff, Edit3 } from 'lucide-vue-next'
 import { getApiKey, setApiKey } from '../../services/dashscope'
 
 const props = defineProps({
@@ -46,7 +56,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'saved'])
 
-const key = ref(getApiKey())
+const currentKey = ref(getApiKey())
+const key = ref('')
 const showKey = ref(false)
 const error = ref('')
 const shouldShake = ref(false)
@@ -54,10 +65,19 @@ const shouldShake = ref(false)
 // 当弹窗打开时重新加载 API Key
 watch(() => props.visible, (visible) => {
   if (visible) {
-    key.value = getApiKey()
+    currentKey.value = getApiKey()
+    key.value = ''
     error.value = ''
     shouldShake.value = false
   }
+})
+
+// 遮罩显示的 API Key
+const maskedKey = computed(() => {
+  if (!currentKey.value) return ''
+  const len = currentKey.value.length
+  if (len <= 8) return '*'.repeat(len)
+  return currentKey.value.slice(0, 8) + '*'.repeat(len - 12) + currentKey.value.slice(-4)
 })
 
 function triggerShake() {
@@ -69,6 +89,12 @@ function triggerShake() {
 
 function handleSave() {
   const trimmed = key.value.trim()
+
+  // 如果有当前 Key 且输入为空，则关闭弹窗（保持不变）
+  if (!trimmed && currentKey.value) {
+    emit('close')
+    return
+  }
 
   // 验证 API Key 不为空
   if (!trimmed) {
@@ -192,5 +218,31 @@ function handleSave() {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.current-key-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.info-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.info-value {
+  flex: 1;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
