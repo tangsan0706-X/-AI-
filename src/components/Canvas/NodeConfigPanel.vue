@@ -48,6 +48,45 @@
           </div>
         </template>
 
+        <!-- Output Results -->
+        <template v-if="node.output && node.status === 'completed'">
+          <div class="config-divider" />
+
+          <div class="output-section">
+            <div class="config-label">输出结果</div>
+
+            <!-- 视频输出 -->
+            <template v-if="node.output.video">
+              <div class="output-preview">
+                <video :src="node.output.video" controls class="output-video" />
+              </div>
+              <a :href="node.output.video" :download="getDownloadFilename('video')" class="btn btn-primary btn-sm download-btn">
+                <Download :size="14" /> 下载视频
+              </a>
+            </template>
+
+            <!-- 图片输出 -->
+            <template v-else-if="node.output.image">
+              <div class="output-preview">
+                <img :src="node.output.image" alt="输出图片" class="output-image" />
+              </div>
+              <a :href="node.output.image" :download="getDownloadFilename('image')" class="btn btn-primary btn-sm download-btn">
+                <Download :size="14" /> 下载图片
+              </a>
+            </template>
+
+            <!-- 文本输出 -->
+            <template v-else-if="node.output.text">
+              <div class="output-text">{{ node.output.text }}</div>
+            </template>
+
+            <!-- 其他数据输出 -->
+            <template v-else>
+              <pre class="output-json">{{ JSON.stringify(node.output, null, 2) }}</pre>
+            </template>
+          </div>
+        </template>
+
         <div class="config-divider" />
 
         <button class="btn btn-outline btn-sm delete-btn" @click="$emit('delete', node.id)">
@@ -60,7 +99,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { X, Trash2 } from 'lucide-vue-next'
+import { X, Trash2, Download } from 'lucide-vue-next'
 import { getNodeType } from '../../data/nodeRegistry'
 
 const props = defineProps({ node: Object })
@@ -73,6 +112,17 @@ const statusLabel = computed(() => statusLabels[props.node?.status] || '空闲')
 
 function updateConfig(key, value) {
   emit('updateConfig', { nodeId: props.node.id, config: { [key]: value } })
+}
+
+function getDownloadFilename(type) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+  const nodeName = props.node.label || props.node.type
+  if (type === 'video') {
+    return `${nodeName}-${timestamp}.mp4`
+  } else if (type === 'image') {
+    return `${nodeName}-${timestamp}.png`
+  }
+  return `${nodeName}-${timestamp}.txt`
 }
 </script>
 
@@ -236,5 +286,59 @@ function updateConfig(key, value) {
 
 .delete-btn:hover {
   background: rgba(239,68,68,0.1);
+}
+
+.output-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.output-preview {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+}
+
+.output-video,
+.output-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.output-text {
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.output-json {
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-family: 'Consolas', 'Monaco', monospace;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.download-btn {
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
 }
 </style>
